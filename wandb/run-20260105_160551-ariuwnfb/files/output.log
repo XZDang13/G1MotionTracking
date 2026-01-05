@@ -1,0 +1,67 @@
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:130: UserWarning: [33mWARN: The obs returned by the `reset()` method was expecting a numpy array, actual type: <class 'dict'>[0m
+  logger.warn(
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:158: UserWarning: [33mWARN: The obs returned by the `reset()` method is not within the observation space.[0m
+  logger.warn(f"{pre} is not within the observation space.")
+  0%|                                                  | 0/1000 [00:00<?, ?it/s]/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:227: UserWarning: [33mWARN: Expects `terminated` signal to be a boolean, actual type: <class 'torch.Tensor'>[0m
+  logger.warn(
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:231: UserWarning: [33mWARN: Expects `truncated` signal to be a boolean, actual type: <class 'torch.Tensor'>[0m
+  logger.warn(
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:130: UserWarning: [33mWARN: The obs returned by the `step()` method was expecting a numpy array, actual type: <class 'dict'>[0m
+  logger.warn(
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:158: UserWarning: [33mWARN: The obs returned by the `step()` method is not within the observation space.[0m
+  logger.warn(f"{pre} is not within the observation space.")
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:245: UserWarning: [33mWARN: The reward returned by `step()` must be a float, int, np.integer or np.floating, actual type: <class 'torch.Tensor'>[0m
+  logger.warn(
+  0%|                                                  | 0/1000 [00:02<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 264, in <module>
+    trainer.train()
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 253, in train
+    obs = self.rollout(obs)
+          ^^^^^^^^^^^^^^^^^
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 165, in rollout
+    _, _, last_value = self.get_action(last_default_obs, last_privilege_obs)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 99, in get_action
+    actor_obs_batch = self.actor_obs_normalizer(actorobs_batch)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/RLAlg/normalizer.py", line 33, in forward
+    return (x - self.mean) / (torch.sqrt(self.var) + self.epsilon)
+            ~~^~~~~~~~~~~
+RuntimeError: The size of tensor a (75) must match the size of tensor b (150) at non-singleton dimension 1
+Traceback (most recent call last):
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 264, in <module>
+    trainer.train()
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 253, in train
+    obs = self.rollout(obs)
+          ^^^^^^^^^^^^^^^^^
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 165, in rollout
+    _, _, last_value = self.get_action(last_default_obs, last_privilege_obs)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 99, in get_action
+    actor_obs_batch = self.actor_obs_normalizer(actorobs_batch)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/RLAlg/normalizer.py", line 33, in forward
+    return (x - self.mean) / (torch.sqrt(self.var) + self.epsilon)
+            ~~^~~~~~~~~~~
+RuntimeError: The size of tensor a (75) must match the size of tensor b (150) at non-singleton dimension 1

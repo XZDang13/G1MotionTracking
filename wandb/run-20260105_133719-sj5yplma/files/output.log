@@ -1,0 +1,42 @@
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:130: UserWarning: [33mWARN: The obs returned by the `reset()` method was expecting a numpy array, actual type: <class 'dict'>[0m
+  logger.warn(
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:158: UserWarning: [33mWARN: The obs returned by the `reset()` method is not within the observation space.[0m
+  logger.warn(f"{pre} is not within the observation space.")
+  0%|                                                  | 0/1000 [00:00<?, ?it/s]
+{'default': tensor([[-0.2413, -0.0541,  0.0762,  ...,  0.0000,  0.0000,  0.0000],
+        [-0.2300,  0.0975,  0.1136,  ...,  0.0000,  0.0000,  0.0000],
+        [-0.1383,  0.0575,  0.1377,  ...,  0.0000,  0.0000,  0.0000],
+        ...,
+        [-0.2067, -0.0771,  0.0531,  ...,  0.0000,  0.0000,  0.0000],
+        [-0.1615,  0.0376,  0.3068,  ...,  0.0000,  0.0000,  0.0000],
+        [-0.2216,  0.1236,  0.0669,  ...,  0.0000,  0.0000,  0.0000]],
+       device='cuda:0'), 'previlege': tensor([[-0.2413, -0.0541,  0.0762,  ..., -0.1299, -0.1946, -0.2092],
+        [-0.2300,  0.0975,  0.1136,  ..., -0.1582, -0.0920, -0.1510],
+        [-0.1383,  0.0575,  0.1377,  ..., -0.1611, -0.0126, -0.2136],
+        ...,
+        [-0.2067, -0.0771,  0.0531,  ..., -0.0913, -0.1420, -0.2079],
+        [-0.1615,  0.0376,  0.3068,  ..., -0.1284, -0.0814, -0.1879],
+        [-0.2216,  0.1236,  0.0669,  ..., -0.1297, -0.1136, -0.1937]],
+       device='cuda:0')}
+Traceback (most recent call last):
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 263, in <module>
+    trainer.train()
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 252, in train
+    obs = self.rollout(obs)
+          ^^^^^^^^^^^^^^^^^
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 119, in rollout
+    privilege_obs = obs["privilege"]
+                    ~~~^^^^^^^^^^^^^
+KeyError: 'privilege'
+Traceback (most recent call last):
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 263, in <module>
+    trainer.train()
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 252, in train
+    obs = self.rollout(obs)
+          ^^^^^^^^^^^^^^^^^
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 119, in rollout
+    privilege_obs = obs["privilege"]
+                    ~~~^^^^^^^^^^^^^
+KeyError: 'privilege'

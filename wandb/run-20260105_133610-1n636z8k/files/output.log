@@ -1,0 +1,27 @@
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:130: UserWarning: [33mWARN: The obs returned by the `reset()` method was expecting a numpy array, actual type: <class 'dict'>[0m
+  logger.warn(
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/home/troja/miniconda3/envs/isaaclab/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py:158: UserWarning: [33mWARN: The obs returned by the `reset()` method is not within the observation space.[0m
+  logger.warn(f"{pre} is not within the observation space.")
+  0%|                                                  | 0/1000 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 262, in <module>
+    trainer.train()
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 251, in train
+    obs = self.rollout(obs)
+          ^^^^^^^^^^^^^^^^^
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 118, in rollout
+    privilege_obs = obs["privilege"]
+                    ~~~^^^^^^^^^^^^^
+KeyError: 'privilege'
+Traceback (most recent call last):
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 262, in <module>
+    trainer.train()
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 251, in train
+    obs = self.rollout(obs)
+          ^^^^^^^^^^^^^^^^^
+  File "/home/troja/Desktop/G1MotionTracking/train.py", line 118, in rollout
+    privilege_obs = obs["privilege"]
+                    ~~~^^^^^^^^^^^^^
+KeyError: 'privilege'
