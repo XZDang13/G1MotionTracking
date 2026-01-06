@@ -22,7 +22,7 @@ from RLAlg.normalizer import Normalizer
 from RLAlg.buffer.replay_buffer import ReplayBuffer, compute_gae
 from RLAlg.nn.steps import StochasticContinuousPolicyStep, ValueStep
 from RLAlg.alg.ppo import PPO
-from RLAlg.logger import WandbLogger
+from RLAlg.logger import WandbLogger, MetricsTracker
 
 from model import Actor, Critic
 from env.cfg import G1JabTrainingEnv
@@ -88,10 +88,17 @@ class Trainer:
             400
         )
 
-        self.ep_ret = torch.zeros(self.cfg.scene.num_envs, device=self.device)
-        self.ep_len = torch.zeros(self.cfg.scene.num_envs, device=self.device)
+        self.global_step = 0
+        self.tracker = MetricsTracker()
 
-        self.global_step = 0   
+        self.tracker.add_batch_metrics("episode_return", self.cfg.scene.num_envs)
+        self.tracker.add_batch_metrics("episode_length", self.cfg.scene.num_envs)
+        self.tracker.add_list_metrics("policy_loss")
+        self.tracker.add_list_metrics("entropy_loss")
+        self.tracker.add_list_metrics("kl_divergence")
+        self.tracker.add_list_metrics("value_loss")
+
+
         WandbLogger.init_project("Mimic", f"G1_Jab")
         
     @torch.no_grad()
@@ -124,24 +131,21 @@ class Trainer:
             reward = task_reward
             #reward = task_reward
 
-            self.ep_ret += reward
-            self.ep_len += 1
+            self.tracker.add_values("episode_return", reward)
+            self.tracker.add_values("episode_length", 1)
 
             done = terminate | timeout
             
             if done.any():
-                log_ep_ret = self.ep_ret[done]
-                log_ep_len = self.ep_len[done]
-
-                log_ep_ret = torch.mean(log_ep_ret).item()
-                log_ep_len = torch.mean(log_ep_len).item()
+                log_ep_ret = self.tracker.get_mean("episode_return", done)
+                log_ep_len = self.tracker.get_mean("episode_length", done)
 
                 step_info = {}
                 step_info['step/mean_returns'] = log_ep_ret
                 step_info['step/mean_length'] = log_ep_len
 
-                self.ep_ret[done] = 0.0
-                self.ep_len[done] = 0.0
+                self.tracker.reset("episode_return", done)
+                self.tracker.reset("episode_length", done)
 
                 WandbLogger.log_metrics(step_info, self.global_step)
 
@@ -182,10 +186,10 @@ class Trainer:
         return obs
     
     def update(self):
-        policy_loss_buffer = []
-        value_loss_buffer = []
-        entropy_buffer = []
-        kl_divergence_buffer = []
+        self.tracker.reset("policy_loss")
+        self.tracker.reset("entropy_loss")
+        self.tracker.reset("kl_divergence")
+        self.tracker.reset("value_loss")
 
         for i in range(5):
             for batch in self.rollout_buffer.sample_batchs(self.batch_keys, 4096*10):
@@ -229,15 +233,15 @@ class Trainer:
                 self.ac_optimizer.step()
                 
 
-                policy_loss_buffer.append(policy_loss.item())
-                value_loss_buffer.append(value_loss.item())
-                entropy_buffer.append(entropy.item())
-                kl_divergence_buffer.append(kl_divergence.item())
+                self.tracker.add_values("policy_loss", policy_loss)
+                self.tracker.add_values("entropy_loss", entropy)
+                self.tracker.add_values("kl_divergence", kl_divergence)
+                self.tracker.add_values("value_loss", value_loss)
 
-        avg_policy_loss = np.mean(policy_loss_buffer)
-        avg_value_loss = np.mean(value_loss_buffer)
-        avg_entropy = np.mean(entropy_buffer)
-        avg_kl_divergence = np.mean(kl_divergence_buffer)
+        avg_policy_loss = self.tracker.get_mean("policy_loss")
+        avg_value_loss = self.tracker.get_mean("value_loss")
+        avg_entropy = self.tracker.get_mean("entropy_loss")
+        avg_kl_divergence = self.tracker.get_mean("kl_divergence")
         
         train_info = {
             "update/avg_policy_loss": avg_policy_loss,

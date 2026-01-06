@@ -70,7 +70,7 @@ class Evaluator:
             default_obs = obs["privilege"]
             action = self.get_action(default_obs, True)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
-
+            
             obs = next_obs
 
         return obs, info

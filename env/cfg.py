@@ -6,7 +6,7 @@ from Ref2Act.motion_lib import SamplerMod
 
 @configclass
 class G1JabEnv(G1MotionTrackingEnvCfg):
-    expert_motion_file = "/home/troja/Desktop/Ref2Act/test/data/jab.npz"
+    expert_motion_file = "env/assests/jab.npz"
     sampler_mod = SamplerMod.Cycle
 
 @configclass
