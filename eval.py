@@ -39,7 +39,7 @@ class Evaluator:
         self.env = gymnasium.make(self.env_name, cfg=self.cfg)
 
         #obs_dim = self.cfg.observation_space
-        obs_dim = self.cfg.privilege_observation_space
+        obs_dim = self.cfg.teacher_observation_space
         action_dim = self.cfg.action_space
 
         self.device = self.env.unwrapped.device
@@ -67,10 +67,9 @@ class Evaluator:
     def rollout(self, obs, info):
         for i in range(5000):
             #default_obs = obs["default"]
-            default_obs = obs["privilege"]
+            default_obs = obs["teacher"]
             action = self.get_action(default_obs, True)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
-            
             obs = next_obs
 
         return obs, info

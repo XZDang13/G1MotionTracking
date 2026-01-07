@@ -37,8 +37,8 @@ class Trainer:
         print(self.cfg.scene.num_envs)
 
         #default_obs_dim = self.cfg.observation_space
-        default_obs_dim = self.cfg.privilege_observation_space
-        privilege_obs_dim = self.cfg.privilege_observation_space
+        default_obs_dim = self.cfg.teacher_observation_space
+        privilege_obs_dim = self.cfg.teacher_observation_space
         action_dim = self.cfg.action_space
 
         self.device = self.env.unwrapped.device
@@ -123,8 +123,8 @@ class Trainer:
         for _ in range(self.steps):
             self.global_step += 1
             #default_obs = obs["default"]
-            default_obs = obs["privilege"]
-            privilege_obs = obs["privilege"]
+            default_obs = obs["teacher"]
+            privilege_obs = obs["teacher"]
             action, log_prob, value = self.get_action(default_obs, privilege_obs)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
             
@@ -165,8 +165,8 @@ class Trainer:
 
 
         #last_default_obs = obs["default"]
-        last_default_obs = obs["privilege"]
-        last_privilege_obs = obs["privilege"]
+        last_default_obs = obs["teacher"]
+        last_privilege_obs = obs["teacher"]
         _, _, last_value = self.get_action(last_default_obs, last_privilege_obs)
         returns, advantages = compute_gae(
             self.rollout_buffer.data["rewards"],
