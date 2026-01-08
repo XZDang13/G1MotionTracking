@@ -18,6 +18,7 @@ import gymnasium
 import torch
 import numpy as np
 
+from RLAlg.scheduler import KLAdaptiveLR
 from RLAlg.normalizer import Normalizer
 from RLAlg.buffer.replay_buffer import ReplayBuffer, compute_gae
 from RLAlg.nn.steps import StochasticContinuousPolicyStep, ValueStep
@@ -37,16 +38,16 @@ class Trainer:
         print(self.cfg.scene.num_envs)
 
         #default_obs_dim = self.cfg.observation_space
-        default_obs_dim = self.cfg.teacher_observation_space
-        privilege_obs_dim = self.cfg.teacher_observation_space
+        policy_obs_dim = self.cfg.policy_observation_space
+        critic_obs_dim = self.cfg.critic_observation_space
         action_dim = self.cfg.action_space
 
         self.device = self.env.unwrapped.device
 
-        self.actor = Actor(default_obs_dim, action_dim).to(self.device)
-        self.critic = Critic(privilege_obs_dim).to(self.device)
-        self.actor_obs_normalizer = Normalizer((default_obs_dim,)).to(self.device)
-        self.critic_obs_normalizer = Normalizer((privilege_obs_dim,)).to(self.device)
+        self.actor = Actor(policy_obs_dim, action_dim).to(self.device)
+        self.critic = Critic(critic_obs_dim).to(self.device)
+        self.actor_obs_normalizer = Normalizer((policy_obs_dim,)).to(self.device)
+        self.critic_obs_normalizer = Normalizer((critic_obs_dim,)).to(self.device)
 
         self.ac_optimizer = torch.optim.Adam(
             [
@@ -55,8 +56,10 @@ class Trainer:
                  {'params': self.critic.parameters(),
                  "name": "critic"},
             ],
-            lr=1e-4
+            lr=1e-3
         )
+
+        self.lr_scheduler = KLAdaptiveLR(self.ac_optimizer, 0.01)
 
         self.steps = 20
 
@@ -65,8 +68,8 @@ class Trainer:
             self.steps
         )
 
-        self.batch_keys = ["observations",
-                           "privilege_observations",
+        self.batch_keys = ["policy_observations",
+                           "critic_observations",
                            "actions",
                            "log_probs",
                            "rewards",
@@ -75,8 +78,8 @@ class Trainer:
                            "advantages"
                         ]
 
-        self.rollout_buffer.create_storage_space("observations", (default_obs_dim,), torch.float32)
-        self.rollout_buffer.create_storage_space("privilege_observations", (privilege_obs_dim,), torch.float32)
+        self.rollout_buffer.create_storage_space("policy_observations", (policy_obs_dim,), torch.float32)
+        self.rollout_buffer.create_storage_space("critic_observations", (critic_obs_dim,), torch.float32)
         self.rollout_buffer.create_storage_space("actions", (action_dim,), torch.float32)
         self.rollout_buffer.create_storage_space("log_probs", (), torch.float32)
         self.rollout_buffer.create_storage_space("rewards", (), torch.float32)
@@ -116,16 +119,15 @@ class Trainer:
 
         return action, log_prob, value
     
-    
     def rollout(self, obs):
         self.actor.eval()
         self.critic.eval()
         for _ in range(self.steps):
             self.global_step += 1
             #default_obs = obs["default"]
-            default_obs = obs["teacher"]
-            privilege_obs = obs["teacher"]
-            action, log_prob, value = self.get_action(default_obs, privilege_obs)
+            policy_obs = obs["policy"]
+            critic_obs = obs["critic"]
+            action, log_prob, value = self.get_action(policy_obs, critic_obs)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
             
             reward = task_reward
@@ -150,8 +152,8 @@ class Trainer:
                 WandbLogger.log_metrics(step_info, self.global_step)
 
             records = {
-                "observations": default_obs,
-                "privilege_observations": privilege_obs,
+                "policy_observations": policy_obs,
+                "critic_observations": critic_obs,
                 "actions": action,
                 "log_probs": log_prob,
                 "rewards": reward,
@@ -163,11 +165,9 @@ class Trainer:
 
             obs = next_obs
 
-
-        #last_default_obs = obs["default"]
-        last_default_obs = obs["teacher"]
-        last_privilege_obs = obs["teacher"]
-        _, _, last_value = self.get_action(last_default_obs, last_privilege_obs)
+        policy_obs = obs["policy"]
+        critic_obs = obs["critic"]
+        _, _, last_value = self.get_action(policy_obs, critic_obs)
         returns, advantages = compute_gae(
             self.rollout_buffer.data["rewards"],
             self.rollout_buffer.data["values"],
@@ -193,20 +193,20 @@ class Trainer:
 
         for i in range(5):
             for batch in self.rollout_buffer.sample_batchs(self.batch_keys, 4096*10):
-                obs_batch = batch["observations"].to(self.device)
-                privilege_obs_batch = batch["privilege_observations"].to(self.device)
+                policy_obs_batch = batch["policy_observations"].to(self.device)
+                critic_obs_batch = batch["critic_observations"].to(self.device)
                 action_batch = batch["actions"].to(self.device)
                 log_prob_batch = batch["log_probs"].to(self.device)
                 value_batch = batch["values"].to(self.device)
                 return_batch = batch["returns"].to(self.device)
                 advantage_batch = batch["advantages"].to(self.device)
 
-                obs_batch = self.actor_obs_normalizer(obs_batch, i==0)
-                privilege_obs_batch = self.critic_obs_normalizer(privilege_obs_batch, i==0)
+                policy_obs_batch = self.actor_obs_normalizer(policy_obs_batch, i==0)
+                critic_obs_batch = self.critic_obs_normalizer(critic_obs_batch, i==0)
 
                 policy_loss_dict = PPO.compute_policy_loss(self.actor,
                                                            log_prob_batch,
-                                                           obs_batch,
+                                                           policy_obs_batch,
                                                            action_batch,
                                                            advantage_batch,
                                                            0.2,
@@ -217,20 +217,22 @@ class Trainer:
                 kl_divergence = policy_loss_dict["kl_divergence"]
 
                 value_loss_dict = PPO.compute_clipped_value_loss(self.critic,
-                                                    privilege_obs_batch,
+                                                    critic_obs_batch,
                                                     value_batch,
                                                     return_batch,
                                                     0.2)
                 
                 value_loss = value_loss_dict["loss"]
 
-                ac_loss = policy_loss - entropy * 0.001 + value_loss * 2.5
+                ac_loss = policy_loss - entropy * 0.005 + value_loss * 1.0
 
                 self.ac_optimizer.zero_grad(set_to_none=True)
                 ac_loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.actor.parameters(), 1.0)
                 torch.nn.utils.clip_grad_norm_(self.critic.parameters(), 1.0)
                 self.ac_optimizer.step()
+                self.lr_scheduler.set_kl(kl_divergence)
+                self.lr_scheduler.step()
                 
 
                 self.tracker.add_values("policy_loss", policy_loss)
@@ -254,7 +256,7 @@ class Trainer:
 
     def train(self):
         obs, _ = self.env.reset()
-        for epoch in trange(1000):
+        for epoch in trange(2000):
             obs = self.rollout(obs)
             self.update()
         self.env.close()

@@ -38,14 +38,13 @@ class Evaluator:
 
         self.env = gymnasium.make(self.env_name, cfg=self.cfg)
 
-        #obs_dim = self.cfg.observation_space
-        obs_dim = self.cfg.teacher_observation_space
+        policy_obs_dim = self.cfg.policy_observation_space
         action_dim = self.cfg.action_space
 
         self.device = self.env.unwrapped.device
 
-        self.obs_normalizer = Normalizer((obs_dim,)).to(self.device)
-        self.actor = Actor(obs_dim, action_dim).to(self.device)
+        self.obs_normalizer = Normalizer((policy_obs_dim,)).to(self.device)
+        self.actor = Actor(policy_obs_dim, action_dim).to(self.device)
 
         normalizer_weights, actor_weights, _ = torch.load("weight.pth")
         self.obs_normalizer.load_state_dict(normalizer_weights)
@@ -66,9 +65,8 @@ class Evaluator:
     
     def rollout(self, obs, info):
         for i in range(5000):
-            #default_obs = obs["default"]
-            default_obs = obs["teacher"]
-            action = self.get_action(default_obs, True)
+            policy_obs = obs["policy"]
+            action = self.get_action(policy_obs, True)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
             obs = next_obs
 

@@ -8,7 +8,7 @@ from Ref2Act.motion_lib import SamplerMod
 class G1JabEnv(G1MotionTrackingEnvCfg):
     expert_motion_file = "env/assests/jab.npz"
     sampler_mod = SamplerMod.Clamp
-    episode_length_s = 6.5
+    episode_length_s = 3.0
 
 @configclass
 class G1JabTrainingEnv(G1JabEnv):
