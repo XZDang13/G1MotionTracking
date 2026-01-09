@@ -210,7 +210,7 @@ class Trainer:
                                                            action_batch,
                                                            advantage_batch,
                                                            0.2,
-                                                           0.0)
+                                                           1e-3)
                 
                 policy_loss = policy_loss_dict["loss"]
                 entropy = policy_loss_dict["entropy"]
