@@ -106,14 +106,14 @@ class Trainer:
         
     @torch.no_grad()
     def get_action(self, actorobs_batch:torch.Tensor, criticobs_batch:torch.Tensor, determine:bool=False):
-        actor_obs_batch = self.actor_obs_normalizer(actorobs_batch, True)
+        actor_obs_batch = self.actor_obs_normalizer(actorobs_batch, False)
         actor_step:StochasticContinuousPolicyStep = self.actor(actor_obs_batch)
         action = actor_step.action
         log_prob = actor_step.log_prob
         if determine:
             action = actor_step.mean
         
-        critic_obs_batch = self.critic_obs_normalizer(criticobs_batch, True)
+        critic_obs_batch = self.critic_obs_normalizer(criticobs_batch, False)
         critic_step:ValueStep = self.critic(critic_obs_batch)
         value = critic_step.value
 
@@ -130,6 +130,7 @@ class Trainer:
             action, log_prob, value = self.get_action(policy_obs, critic_obs)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
             
+            #reward = torch.sigmoid(task_reward)
             reward = task_reward
             step_info = {}
             for key, value in info.items():
@@ -205,8 +206,8 @@ class Trainer:
                 return_batch = batch["returns"].to(self.device)
                 advantage_batch = batch["advantages"].to(self.device)
 
-                policy_obs_batch = self.actor_obs_normalizer(policy_obs_batch)
-                critic_obs_batch = self.critic_obs_normalizer(critic_obs_batch)
+                policy_obs_batch = self.actor_obs_normalizer(policy_obs_batch, i==0)
+                critic_obs_batch = self.critic_obs_normalizer(critic_obs_batch, i==0)
 
                 policy_loss_dict = PPO.compute_policy_loss(self.actor,
                                                            log_prob_batch,
