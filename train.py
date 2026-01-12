@@ -106,14 +106,14 @@ class Trainer:
         
     @torch.no_grad()
     def get_action(self, actorobs_batch:torch.Tensor, criticobs_batch:torch.Tensor, determine:bool=False):
-        actor_obs_batch = self.actor_obs_normalizer(actorobs_batch)
+        actor_obs_batch = self.actor_obs_normalizer(actorobs_batch, True)
         actor_step:StochasticContinuousPolicyStep = self.actor(actor_obs_batch)
         action = actor_step.action
         log_prob = actor_step.log_prob
         if determine:
             action = actor_step.mean
         
-        critic_obs_batch = self.critic_obs_normalizer(criticobs_batch)
+        critic_obs_batch = self.critic_obs_normalizer(criticobs_batch, True)
         critic_step:ValueStep = self.critic(critic_obs_batch)
         value = critic_step.value
 
@@ -131,7 +131,11 @@ class Trainer:
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
             
             reward = task_reward
-            #reward = task_reward
+            step_info = {}
+            for key, value in info.items():
+                step_info[f"step/{key}"] = value
+
+            WandbLogger.log_metrics(step_info, self.global_step)
 
             self.tracker.add_values("episode_return", reward)
             self.tracker.add_values("episode_length", 1)
@@ -142,14 +146,14 @@ class Trainer:
                 log_ep_ret = self.tracker.get_mean("episode_return", done)
                 log_ep_len = self.tracker.get_mean("episode_length", done)
 
-                step_info = {}
-                step_info['step/mean_returns'] = log_ep_ret
-                step_info['step/mean_length'] = log_ep_len
+                episode_info = {}
+                episode_info['episode/mean_returns'] = log_ep_ret
+                episode_info['episode/mean_length'] = log_ep_len
 
                 self.tracker.reset("episode_return", done)
                 self.tracker.reset("episode_length", done)
 
-                WandbLogger.log_metrics(step_info, self.global_step)
+                WandbLogger.log_metrics(episode_info, self.global_step)
 
             records = {
                 "policy_observations": policy_obs,
@@ -201,8 +205,8 @@ class Trainer:
                 return_batch = batch["returns"].to(self.device)
                 advantage_batch = batch["advantages"].to(self.device)
 
-                policy_obs_batch = self.actor_obs_normalizer(policy_obs_batch, i==0)
-                critic_obs_batch = self.critic_obs_normalizer(critic_obs_batch, i==0)
+                policy_obs_batch = self.actor_obs_normalizer(policy_obs_batch)
+                critic_obs_batch = self.critic_obs_normalizer(critic_obs_batch)
 
                 policy_loss_dict = PPO.compute_policy_loss(self.actor,
                                                            log_prob_batch,
@@ -265,6 +269,8 @@ class Trainer:
             [self.actor_obs_normalizer.state_dict(), self.actor.state_dict(), self.critic.state_dict()],
             "weight.pth"
         )
+
+        WandbLogger.finish_project()
 
 if __name__ == "__main__":
     trainer = Trainer()

@@ -35,6 +35,7 @@ class Evaluator:
         self.cfg.add_action_noise = False
         self.cfg.add_obs_noise = False
         self.cfg.add_reset_noise = False
+        self.cfg.random_start = False
 
         self.env = gymnasium.make(self.env_name, cfg=self.cfg)
 
