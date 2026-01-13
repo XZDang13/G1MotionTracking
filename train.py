@@ -38,7 +38,8 @@ class Trainer:
         print(self.cfg.scene.num_envs)
 
         #default_obs_dim = self.cfg.observation_space
-        policy_obs_dim = self.cfg.policy_observation_space
+        #policy_obs_dim = self.cfg.policy_observation_space
+        policy_obs_dim = self.cfg.critic_observation_space
         critic_obs_dim = self.cfg.critic_observation_space
         action_dim = self.cfg.action_space
 
@@ -86,11 +87,6 @@ class Trainer:
         self.rollout_buffer.create_storage_space("values", (), torch.float32)
         self.rollout_buffer.create_storage_space("dones", (), torch.float32)
 
-        self.expert_motion_buffer = ReplayBuffer(
-            500,
-            400
-        )
-
         self.global_step = 0
         self.tracker = MetricsTracker()
 
@@ -102,30 +98,29 @@ class Trainer:
         self.tracker.add_list_metrics("value_loss")
 
 
-        WandbLogger.init_project("Mimic", f"G1_Jab")
+        WandbLogger.init_project("Mimic", f"G1_Pick")
         
     @torch.no_grad()
     def get_action(self, actorobs_batch:torch.Tensor, criticobs_batch:torch.Tensor, determine:bool=False):
-        actor_obs_batch = self.actor_obs_normalizer(actorobs_batch, False)
+        actor_obs_batch = self.actor_obs_normalizer(actorobs_batch)
         actor_step:StochasticContinuousPolicyStep = self.actor(actor_obs_batch)
         action = actor_step.action
         log_prob = actor_step.log_prob
         if determine:
             action = actor_step.mean
         
-        critic_obs_batch = self.critic_obs_normalizer(criticobs_batch, False)
+        critic_obs_batch = self.critic_obs_normalizer(criticobs_batch)
         critic_step:ValueStep = self.critic(critic_obs_batch)
         value = critic_step.value
 
         return action, log_prob, value
     
     def rollout(self, obs):
-        self.actor.eval()
-        self.critic.eval()
         for _ in range(self.steps):
             self.global_step += 1
             #default_obs = obs["default"]
-            policy_obs = obs["policy"]
+            #policy_obs = obs["policy"]
+            policy_obs = obs["critic"]
             critic_obs = obs["critic"]
             action, log_prob, value = self.get_action(policy_obs, critic_obs)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
@@ -170,7 +165,8 @@ class Trainer:
 
             obs = next_obs
 
-        policy_obs = obs["policy"]
+        #policy_obs = obs["policy"]
+        policy_obs = obs["critic"]
         critic_obs = obs["critic"]
         _, _, last_value = self.get_action(policy_obs, critic_obs)
         returns, advantages = compute_gae(
@@ -186,8 +182,6 @@ class Trainer:
         self.rollout_buffer.add_storage("returns", returns)
         self.rollout_buffer.add_storage("advantages", advantages)
 
-        self.actor.train()
-        self.critic.train()
         return obs
     
     def update(self):
@@ -215,7 +209,7 @@ class Trainer:
                                                            action_batch,
                                                            advantage_batch,
                                                            0.2,
-                                                           1e-3)
+                                                           0.0)
                 
                 policy_loss = policy_loss_dict["loss"]
                 entropy = policy_loss_dict["entropy"]
@@ -236,8 +230,6 @@ class Trainer:
                 torch.nn.utils.clip_grad_norm_(self.actor.parameters(), 1.0)
                 torch.nn.utils.clip_grad_norm_(self.critic.parameters(), 1.0)
                 self.ac_optimizer.step()
-                self.lr_scheduler.set_kl(kl_divergence)
-                self.lr_scheduler.step()
                 
 
                 self.tracker.add_values("policy_loss", policy_loss)
@@ -249,6 +241,9 @@ class Trainer:
         avg_value_loss = self.tracker.get_mean("value_loss")
         avg_entropy = self.tracker.get_mean("entropy_loss")
         avg_kl_divergence = self.tracker.get_mean("kl_divergence")
+
+        self.lr_scheduler.set_kl(avg_kl_divergence)
+        self.lr_scheduler.step()
         
         train_info = {
             "update/avg_policy_loss": avg_policy_loss,
@@ -261,7 +256,7 @@ class Trainer:
 
     def train(self):
         obs, _ = self.env.reset()
-        for epoch in trange(2000):
+        for epoch in trange(1000):
             obs = self.rollout(obs)
             self.update()
         self.env.close()
@@ -272,6 +267,7 @@ class Trainer:
         )
 
         WandbLogger.finish_project()
+        print(self.env.unwrapped.sampler.get_bin_distributions())
 
 if __name__ == "__main__":
     trainer = Trainer()
