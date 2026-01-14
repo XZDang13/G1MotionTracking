@@ -32,14 +32,15 @@ class Trainer:
     def __init__(self):
         self.cfg = G1JabTrainingEnv()
         self.env_name = "G1MotionTracking-v0"
+        self.cfg.random_start = False
 
         self.env = gymnasium.make(self.env_name, cfg=self.cfg)
 
         print(self.cfg.scene.num_envs)
 
         #default_obs_dim = self.cfg.observation_space
-        #policy_obs_dim = self.cfg.policy_observation_space
-        policy_obs_dim = self.cfg.critic_observation_space
+        policy_obs_dim = self.cfg.policy_observation_space
+        #policy_obs_dim = self.cfg.critic_observation_space
         critic_obs_dim = self.cfg.critic_observation_space
         action_dim = self.cfg.action_space
 
@@ -85,7 +86,7 @@ class Trainer:
         self.rollout_buffer.create_storage_space("log_probs", (), torch.float32)
         self.rollout_buffer.create_storage_space("rewards", (), torch.float32)
         self.rollout_buffer.create_storage_space("values", (), torch.float32)
-        self.rollout_buffer.create_storage_space("dones", (), torch.float32)
+        self.rollout_buffer.create_storage_space("terminate", (), torch.float32)
 
         self.global_step = 0
         self.tracker = MetricsTracker()
@@ -119,8 +120,8 @@ class Trainer:
         for _ in range(self.steps):
             self.global_step += 1
             #default_obs = obs["default"]
-            #policy_obs = obs["policy"]
-            policy_obs = obs["critic"]
+            policy_obs = obs["policy"]
+            #policy_obs = obs["critic"]
             critic_obs = obs["critic"]
             action, log_prob, value = self.get_action(policy_obs, critic_obs)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
@@ -158,21 +159,21 @@ class Trainer:
                 "log_probs": log_prob,
                 "rewards": reward,
                 "values": value,
-                "dones": done
+                "terminate": terminate
             }
 
             self.rollout_buffer.add_records(records)
 
             obs = next_obs
 
-        #policy_obs = obs["policy"]
-        policy_obs = obs["critic"]
+        policy_obs = obs["policy"]
+        #policy_obs = obs["critic"]
         critic_obs = obs["critic"]
         _, _, last_value = self.get_action(policy_obs, critic_obs)
         returns, advantages = compute_gae(
             self.rollout_buffer.data["rewards"],
             self.rollout_buffer.data["values"],
-            self.rollout_buffer.data["dones"],
+            self.rollout_buffer.data["terminate"],
             last_value,
             0.99,
             0.95
@@ -256,7 +257,7 @@ class Trainer:
 
     def train(self):
         obs, _ = self.env.reset()
-        for epoch in trange(1000):
+        for epoch in trange(2000):
             obs = self.rollout(obs)
             self.update()
         self.env.close()
