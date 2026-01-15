@@ -32,7 +32,7 @@ class Trainer:
     def __init__(self):
         self.cfg = G1JabTrainingEnv()
         self.env_name = "G1MotionTracking-v0"
-        self.cfg.random_start = False
+        #self.cfg.random_start = False
 
         self.env = gymnasium.make(self.env_name, cfg=self.cfg)
 
@@ -58,10 +58,10 @@ class Trainer:
                  {'params': self.critic.parameters(),
                  "name": "critic"},
             ],
-            lr=1e-3
+            lr=3e-4
         )
 
-        self.lr_scheduler = KLAdaptiveLR(self.ac_optimizer, 0.01)
+        #self.lr_scheduler = KLAdaptiveLR(self.ac_optimizer, 0.01)
 
         self.steps = 20
 
@@ -243,8 +243,8 @@ class Trainer:
         avg_entropy = self.tracker.get_mean("entropy_loss")
         avg_kl_divergence = self.tracker.get_mean("kl_divergence")
 
-        self.lr_scheduler.set_kl(avg_kl_divergence)
-        self.lr_scheduler.step()
+        #self.lr_scheduler.set_kl(avg_kl_divergence)
+        #self.lr_scheduler.step()
         
         train_info = {
             "update/avg_policy_loss": avg_policy_loss,
@@ -268,7 +268,7 @@ class Trainer:
         )
 
         WandbLogger.finish_project()
-        print(self.env.unwrapped.sampler.get_bin_distributions())
+        print(self.env.unwrapped.sampler.bin_sample_counts)
 
 if __name__ == "__main__":
     trainer = Trainer()

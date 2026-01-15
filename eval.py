@@ -59,7 +59,7 @@ class Evaluator:
         self.tracker.add_batch_metrics("episode_return", self.cfg.scene.num_envs)
         self.tracker.add_batch_metrics("episode_length", self.cfg.scene.num_envs)
 
-        WandbLogger.init_project("Mimic", f"G1_Pick")
+        WandbLogger.init_project("Mimic_Eval", f"G1_Pick")
 
     @torch.no_grad()
     def get_action(self, obs_batch:torch.Tensor, determine:bool=False):
