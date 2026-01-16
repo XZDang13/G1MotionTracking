@@ -128,11 +128,11 @@ class Trainer:
             
             #reward = torch.sigmoid(task_reward)
             reward = task_reward
-            step_info = {}
-            for key, value in info.items():
-                step_info[f"step/{key}"] = value
+            #step_info = {}
+            #for key, value in info.items():
+            #    step_info[f"step/{key}"] = value
 
-            WandbLogger.log_metrics(step_info, self.global_step)
+            #WandbLogger.log_metrics(step_info, self.global_step)
 
             self.tracker.add_values("episode_return", reward)
             self.tracker.add_values("episode_length", 1)
@@ -257,7 +257,7 @@ class Trainer:
 
     def train(self):
         obs, _ = self.env.reset()
-        for epoch in trange(2000):
+        for epoch in trange(500):
             obs = self.rollout(obs)
             self.update()
         self.env.close()

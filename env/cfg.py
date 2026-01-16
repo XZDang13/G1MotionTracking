@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from isaaclab.utils import configclass
 from Ref2Act.config.env_cfg import G1MotionTrackingEnvCfg, EventCfg, ActionMod
-from Ref2Act.motion_lib import SamplerMod
+from Ref2Act.sampler import SamplerMod
 
 @configclass
 class G1JabEnv(G1MotionTrackingEnvCfg):

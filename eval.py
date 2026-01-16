@@ -55,11 +55,11 @@ class Evaluator:
         self.obs_normalizer.eval()
         self.actor.eval()
 
-        self.tracker = MetricsTracker()
-        self.tracker.add_batch_metrics("episode_return", self.cfg.scene.num_envs)
-        self.tracker.add_batch_metrics("episode_length", self.cfg.scene.num_envs)
+        #self.tracker = MetricsTracker()
+        #self.tracker.add_batch_metrics("episode_return", self.cfg.scene.num_envs)
+        #self.tracker.add_batch_metrics("episode_length", self.cfg.scene.num_envs)
 
-        WandbLogger.init_project("Mimic_Eval", f"G1_Pick")
+        #WandbLogger.init_project("Mimic_Eval", f"G1_Pick")
 
     @torch.no_grad()
     def get_action(self, obs_batch:torch.Tensor, determine:bool=False):
@@ -73,35 +73,35 @@ class Evaluator:
 
     
     def rollout(self, obs, info):
-        for i in range(1000):
+        for i in range(2000):
             policy_obs = obs["policy"]
             #policy_obs = obs["critic"]
             action = self.get_action(policy_obs, True)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
             reward = task_reward
-            step_info = {}
-            for key, value in info.items():
-                step_info[f"step/{key}"] = value
+            #step_info = {}
+            #for key, value in info.items():
+            #    step_info[f"step/{key}"] = value
 
-            WandbLogger.log_metrics(step_info, i)
+            #WandbLogger.log_metrics(step_info, i)
 
-            self.tracker.add_values("episode_return", reward)
-            self.tracker.add_values("episode_length", 1)
+            #self.tracker.add_values("episode_return", reward)
+            #self.tracker.add_values("episode_length", 1)
 
             done = terminate | timeout
             
-            if done.any():
-                log_ep_ret = self.tracker.get_mean("episode_return", done)
-                log_ep_len = self.tracker.get_mean("episode_length", done)
+            #if done.any():
+                #log_ep_ret = self.tracker.get_mean("episode_return", done)
+                #log_ep_len = self.tracker.get_mean("episode_length", done)
 
-                episode_info = {}
-                episode_info['episode/mean_returns'] = log_ep_ret
-                episode_info['episode/mean_length'] = log_ep_len
+                #episode_info = {}
+                #episode_info['episode/mean_returns'] = log_ep_ret
+                #episode_info['episode/mean_length'] = log_ep_len
 
-                self.tracker.reset("episode_return", done)
-                self.tracker.reset("episode_length", done)
+                #self.tracker.reset("episode_return", done)
+                #self.tracker.reset("episode_length", done)
 
-                WandbLogger.log_metrics(episode_info, i)
+                #WandbLogger.log_metrics(episode_info, i)
 
             obs = next_obs
 
