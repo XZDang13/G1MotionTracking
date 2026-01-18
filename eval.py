@@ -49,7 +49,9 @@ class Evaluator:
         self.obs_normalizer = Normalizer((policy_obs_dim,)).to(self.device)
         self.actor = Actor(policy_obs_dim, action_dim).to(self.device)
 
-        normalizer_weights, actor_weights, _ = torch.load("weight.pth")
+        weights = torch.load("weight.pth")
+        normalizer_weights = weights["actor_norm"]
+        actor_weights = weights["actor"]
         self.obs_normalizer.load_state_dict(normalizer_weights)
         self.actor.load_state_dict(actor_weights)
         self.obs_normalizer.eval()
@@ -73,8 +75,9 @@ class Evaluator:
 
     
     def rollout(self, obs, info):
-        for i in range(2000):
+        for i in range(10):
             policy_obs = obs["policy"]
+            #print(policy_obs[0])
             #policy_obs = obs["critic"]
             action = self.get_action(policy_obs, True)
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)

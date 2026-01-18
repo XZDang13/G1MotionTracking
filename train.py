@@ -58,10 +58,10 @@ class Trainer:
                  {'params': self.critic.parameters(),
                  "name": "critic"},
             ],
-            lr=3e-4
+            lr=1e-3
         )
 
-        #self.lr_scheduler = KLAdaptiveLR(self.ac_optimizer, 0.01)
+        self.lr_scheduler = KLAdaptiveLR(self.ac_optimizer, 0.01)
 
         self.steps = 20
 
@@ -231,6 +231,8 @@ class Trainer:
                 torch.nn.utils.clip_grad_norm_(self.actor.parameters(), 1.0)
                 torch.nn.utils.clip_grad_norm_(self.critic.parameters(), 1.0)
                 self.ac_optimizer.step()
+                self.lr_scheduler.set_kl(kl_divergence)
+                self.lr_scheduler.step()
                 
 
                 self.tracker.add_values("policy_loss", policy_loss)
@@ -242,9 +244,6 @@ class Trainer:
         avg_value_loss = self.tracker.get_mean("value_loss")
         avg_entropy = self.tracker.get_mean("entropy_loss")
         avg_kl_divergence = self.tracker.get_mean("kl_divergence")
-
-        #self.lr_scheduler.set_kl(avg_kl_divergence)
-        #self.lr_scheduler.step()
         
         train_info = {
             "update/avg_policy_loss": avg_policy_loss,
@@ -257,13 +256,27 @@ class Trainer:
 
     def train(self):
         obs, _ = self.env.reset()
-        for epoch in trange(500):
+        for epoch in trange(3000):
             obs = self.rollout(obs)
             self.update()
         self.env.close()
 
+        joint_params = self.env.unwrapped.get_joint_params()
+
         torch.save(
-            [self.actor_obs_normalizer.state_dict(), self.actor.state_dict(), self.critic.state_dict()],
+            {
+                "actor_norm": self.actor_obs_normalizer.state_dict(), 
+                "actor": self.actor.state_dict(), 
+                "critic_norm": self.critic_obs_normalizer.state_dict(),
+                "critic": self.critic.state_dict(),
+                "joint_names": joint_params["joint_names"],
+                "joint_effort_limits": joint_params["joint_effort_limits"],
+                "joint_pos_limits": joint_params["joint_pos_limits"],
+                "joint_stiffness": joint_params["joint_stiffness"],
+                "joint_damping": joint_params["joint_damping"],
+                "joint_offset": joint_params["joint_offset"],
+                "action_scale": joint_params["action_scale"],
+            },
             "weight.pth"
         )
 
