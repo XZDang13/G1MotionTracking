@@ -9,10 +9,12 @@ weight = torch.load("weight.pth")
 
 normalizer_weight = weight["actor_norm"]
 actor_weight = weight["actor"]
+joint_effort_limits = weight["joint_effort_limits"].cpu()
 joint_stiffness = weight["joint_stiffness"].cpu()
 joint_damping = weight["joint_damping"].cpu()
-action_offset = weight["joint_offset"].cpu()
+action_offset = weight["action_offset"].cpu()
 action_scale = weight["action_scale"].cpu()
+
 
 device = torch.device("cuda:0")
 
@@ -34,15 +36,25 @@ def get_action(obs_batch:torch.Tensor, determine:bool=False):
     
     return action.cpu()
 
-env = MujocoEnv(1/1000, 20, joint_stiffness,
-                joint_damping, action_offset, action_scale,
-                "env/assests/jab.npz", render=True)
+env = MujocoEnv(1/2000, 40, kp=joint_stiffness,
+                kd=joint_damping, effort_limits=joint_effort_limits, action_offset=action_offset,
+                action_scale=action_scale, expert_motion_file="env/assests/jab.npz", render=True)
 
 obs = env.reset()
 
-for _ in range(1000):
-    print(env.get_projected_gravity())
+def wait_for_next_step():
+    while True:
+        key = input("Press n for next step (q to quit): ").strip().lower()
+        if key == "n":
+            return True
+        if key in {"q", "quit"}:
+            return False
+
+for _ in range(100):
+    if not wait_for_next_step():
+        break
     action = get_action(obs.to(device), True)
+    #print(action)
     obs = env.step(action)
 
 env.close()

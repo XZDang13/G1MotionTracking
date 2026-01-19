@@ -75,11 +75,12 @@ class Evaluator:
 
     
     def rollout(self, obs, info):
-        for i in range(10):
+        for i in range(500):
             policy_obs = obs["policy"]
             #print(policy_obs[0])
             #policy_obs = obs["critic"]
             action = self.get_action(policy_obs, True)
+            #print(action[0])
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
             reward = task_reward
             #step_info = {}

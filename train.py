@@ -256,7 +256,7 @@ class Trainer:
 
     def train(self):
         obs, _ = self.env.reset()
-        for epoch in trange(3000):
+        for epoch in trange(1000):
             obs = self.rollout(obs)
             self.update()
         self.env.close()
@@ -274,7 +274,7 @@ class Trainer:
                 "joint_pos_limits": joint_params["joint_pos_limits"],
                 "joint_stiffness": joint_params["joint_stiffness"],
                 "joint_damping": joint_params["joint_damping"],
-                "joint_offset": joint_params["joint_offset"],
+                "action_offset": joint_params["action_offset"],
                 "action_scale": joint_params["action_scale"],
             },
             "weight.pth"
