@@ -31,7 +31,7 @@ class Evaluator:
 
         self.env_name = "G1MotionTracking-v0"
         
-        self.cfg.scene.num_envs = 4
+        self.cfg.scene.num_envs = 1
         self.cfg.training = False
         self.cfg.add_action_noise = False
         self.cfg.add_obs_noise = False
@@ -49,7 +49,7 @@ class Evaluator:
         self.obs_normalizer = Normalizer((policy_obs_dim,)).to(self.device)
         self.actor = Actor(policy_obs_dim, action_dim).to(self.device)
 
-        weights = torch.load("weight.pth")
+        weights = torch.load("final.pth")
         normalizer_weights = weights["actor_norm"]
         actor_weights = weights["actor"]
         self.obs_normalizer.load_state_dict(normalizer_weights)
@@ -75,11 +75,13 @@ class Evaluator:
 
     
     def rollout(self, obs, info):
-        for i in range(500):
+        for i in range(1000):
             policy_obs = obs["policy"]
             #print(policy_obs[0])
             #policy_obs = obs["critic"]
             action = self.get_action(policy_obs, True)
+            #print("Action:")
+            #print(action)
             #print(action[0])
             next_obs, task_reward, terminate, timeout, info = self.env.step(action)
             reward = task_reward
@@ -113,6 +115,8 @@ class Evaluator:
 
     def eval(self):
         obs, info = self.env.reset()
+        #print(obs["policy"])
+        #print(obs["policy"])
         obs, info = self.rollout(obs, info)
 
         self.env.close()

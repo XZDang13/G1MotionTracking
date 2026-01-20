@@ -254,13 +254,7 @@ class Trainer:
 
         WandbLogger.log_metrics(train_info, self.global_step)
 
-    def train(self):
-        obs, _ = self.env.reset()
-        for epoch in trange(1000):
-            obs = self.rollout(obs)
-            self.update()
-        self.env.close()
-
+    def save_weight(self, name:str):
         joint_params = self.env.unwrapped.get_joint_params()
 
         torch.save(
@@ -277,8 +271,20 @@ class Trainer:
                 "action_offset": joint_params["action_offset"],
                 "action_scale": joint_params["action_scale"],
             },
-            "weight.pth"
+            f"{name}.pth"
         )
+
+    def train(self):
+        obs, _ = self.env.reset()
+        for epoch in trange(2000):
+            obs = self.rollout(obs)
+            self.update()
+
+            #if (epoch+1) % 1000 == 0:
+            #    self.save_weight(epoch+1)
+        self.env.close()
+
+        self.save_weight("final")
 
         WandbLogger.finish_project()
         print(self.env.unwrapped.sampler.bin_sample_counts)
