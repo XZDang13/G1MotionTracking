@@ -36,10 +36,10 @@ def get_action(obs_batch:torch.Tensor, determine:bool=False):
     
     return action.cpu()
 
-env = MujocoEnv(1/2000, 40, kp=joint_stiffness,
+env = MujocoEnv(1/200, 4, kp=joint_stiffness,
                 kd=joint_damping, effort_limits=joint_effort_limits, joint_pos_limits = joint_pos_limits,
                 action_offset=action_offset,
-                action_scale=action_scale, expert_motion_file="env/assests/jab.npz", render=True)
+                action_scale=action_scale, expert_motion_file="env/assests/punch.npz", render=True)
 
 obs = env.reset()
 
