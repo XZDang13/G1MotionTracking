@@ -36,10 +36,10 @@ def get_action(obs_batch:torch.Tensor, determine:bool=False):
     
     return action.cpu()
 
-env = MujocoEnv(1/200, 4, kp=joint_stiffness,
+env = MujocoEnv(1/2000, 40, kp=joint_stiffness,
                 kd=joint_damping, effort_limits=joint_effort_limits, joint_pos_limits = joint_pos_limits,
                 action_offset=action_offset,
-                action_scale=action_scale, expert_motion_file="env/assests/pick.npz", render=True)
+                action_scale=action_scale, expert_motion_file="env/assests/jab.npz", render=True)
 
 obs = env.reset()
 
@@ -51,7 +51,7 @@ def wait_for_next_step():
         if key in {"q", "quit"}:
             return False
 
-for _ in range(500):
+for _ in range(1000):
     #if not wait_for_next_step():
     #    break
     #print(obs)
