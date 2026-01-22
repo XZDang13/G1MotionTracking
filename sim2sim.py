@@ -5,7 +5,7 @@ from RLAlg.normalizer import Normalizer
 from RLAlg.nn.steps import StochasticContinuousPolicyStep
 from model import Actor
 
-weight = torch.load("final.pth")
+weight = torch.load("punch.pth")
 
 normalizer_weight = weight["actor_norm"]
 actor_weight = weight["actor"]
