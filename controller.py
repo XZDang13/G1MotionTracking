@@ -143,7 +143,7 @@ class Controller:
         self.obs_normalizer.eval()
         self.actor.eval()
 
-        self.motion_lib = MotionLib("env/assests/jab.npz")
+        self.motion_lib = MotionLib("env/assests/handshake.npz")
         self.time = torch.zeros(1)
 
         self.remote_controller = RemoteController()

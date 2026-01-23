@@ -53,13 +53,13 @@ class Trainer:
         self.critic_obs_normalizer = Normalizer((critic_obs_dim,)).to(self.device)
 
         
-        if os.path.exists("final.pth"):
-            weight = torch.load("final.pth")
-            self.actor_obs_normalizer.load_state_dict(weight["actor_norm"])
-            self.actor.load_state_dict(weight["actor"])
-            self.critic_obs_normalizer.load_state_dict(weight["critic_norm"])
-            self.critic.load_state_dict(weight["critic"])
-            print("Loaded existing weights.")
+        #if os.path.exists("final.pth"):
+        #    weight = torch.load("final.pth")
+        #    self.actor_obs_normalizer.load_state_dict(weight["actor_norm"])
+        #    self.actor.load_state_dict(weight["actor"])
+        #    self.critic_obs_normalizer.load_state_dict(weight["critic_norm"])
+        #    self.critic.load_state_dict(weight["critic"])
+        #    print("Loaded existing weights.")
         
 
         self.ac_optimizer = torch.optim.Adam(

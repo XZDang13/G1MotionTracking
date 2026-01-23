@@ -5,7 +5,7 @@ from RLAlg.normalizer import Normalizer
 from RLAlg.nn.steps import StochasticContinuousPolicyStep
 from model import Actor
 
-weight = torch.load("punch.pth")
+weight = torch.load("final.pth")
 
 normalizer_weight = weight["actor_norm"]
 actor_weight = weight["actor"]
@@ -39,7 +39,7 @@ def get_action(obs_batch:torch.Tensor, determine:bool=False):
 env = MujocoEnv(1/200, 4, kp=joint_stiffness,
                 kd=joint_damping, effort_limits=joint_effort_limits, joint_pos_limits = joint_pos_limits,
                 action_offset=action_offset,
-                action_scale=action_scale, expert_motion_file="env/assests/punch.npz", render=True)
+                action_scale=action_scale, expert_motion_file="env/assests/jump.npz", render=True)
 
 obs = env.reset()
 
