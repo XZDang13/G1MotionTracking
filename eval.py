@@ -49,7 +49,7 @@ class Evaluator:
         self.obs_normalizer = Normalizer((policy_obs_dim,)).to(self.device)
         self.actor = Actor(policy_obs_dim, action_dim).to(self.device)
 
-        weights = torch.load("final.pth")
+        weights = torch.load("jab.pth")
         normalizer_weights = weights["actor_norm"]
         actor_weights = weights["actor"]
         self.obs_normalizer.load_state_dict(normalizer_weights)
