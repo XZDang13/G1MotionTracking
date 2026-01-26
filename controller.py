@@ -111,14 +111,14 @@ def init_cmd_hg(cmd: LowCmdHG, mode_machine: int, mode_pr: int):
         cmd.motor_cmd[i].tau = 0
 
 class Controller:
-    def __init__(self):
+    def __init__(self, weight_path:str, motion_path:str):
 
         self.device = torch.device("cuda:0")
 
         self.obs_normalizer = Normalizer((124,)).to(self.device)
         self.actor = Actor(124, 23).to(self.device)
 
-        weight = torch.load("final.pth")
+        weight = torch.load(weight_path)
 
         normalizer_weight = weight["actor_norm"]
         actor_weight = weight["actor"]
@@ -143,7 +143,7 @@ class Controller:
         self.obs_normalizer.eval()
         self.actor.eval()
 
-        self.motion_lib = MotionLib("env/assests/handshake.npz")
+        self.motion_lib = MotionLib(motion_path)
         self.time = torch.zeros(1)
 
         self.remote_controller = RemoteController()
@@ -356,14 +356,22 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("net", type=str, help="network interface")
+    parser.add_argument("--net", type=str, help="network interface")
+    parser.add_argument("--motion", choices=["handshake", "jab"], default="handshake", help="motion name")
     args = parser.parse_args()
 
 
     # Initialize DDS communication
     ChannelFactoryInitialize(0, args.net)
 
-    controller = Controller()
+    if args.motion == "handshake":
+        weight_path = "handshake.pth"
+        motion_path = "env/assests/handshake.npz"
+    elif args.motion == "jab":
+        weight_path = "jab.pth"
+        motion_path = "env/assests/jab.npz"
+
+    controller = Controller(weight_path, motion_path)
 
     controller.wait_for_low_state()
     controller.zero_torque_state()

@@ -110,7 +110,7 @@ class Trainer:
         self.tracker.add_list_metrics("value_loss")
 
 
-        WandbLogger.init_project("Mimic", f"G1_Pick")
+        WandbLogger.init_project("Paper", f"G1_Walk")
         
     @torch.no_grad()
     def get_action(self, actorobs_batch:torch.Tensor, criticobs_batch:torch.Tensor, determine:bool=False):
